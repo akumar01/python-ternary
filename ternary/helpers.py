@@ -3,7 +3,7 @@ Helper functions and utilities for projecting to the simplex and various tasks.
 """
 
 import numpy as np
-
+import pdb
 
 ### Constants ###
 
@@ -11,6 +11,42 @@ SQRT3 = np.sqrt(3)
 SQRT3OVER2 = SQRT3 / 2.
 
 ### Auxilliary Functions ###
+def ternary_conversion(points):
+    converted_points = np.array([(0.5 * (2 * y + z)/(x + y + z), np.sqrt(3)/2 * z/(x + y + z))
+                                 for x, y, z in points])
+
+    return converted_points
+
+
+def poly_inside_triangle(vertices):
+    # See wikipedia entry on Barycentric coordinates
+    x1 = 0
+    x2 = 1
+    x3 = 0.5
+
+    y1 = 0
+    y2 = 0
+    y3 = np.sqrt(3)/2
+
+    T = np.array([[x1 - x3, x2 - x3], [y1 - y3, y2 - y3]])
+
+
+    def inside_triangle(v):
+        # Convert v to barycentric coordinates and verify that it lies within the triangle
+        l1 = ((y2 - y3) * (v[0] - x3) + (x3 - x2) * (v[1] - y3))/np.linalg.det(T)
+        l2 = ((y3 - y1) * (v[0] - x3) + (x1 - x3) * (v[1] - y3))/np.linalg.det(T)
+        l3 = 1 - l1 - l2
+        if np.all(np.array([l1, l2, l3]) > 0) and np.all(np.array([l1, l2, l3]) < 1):
+            return True
+        else:
+            return False
+
+    inside = []
+    for vertex in vertices:
+        inside.append(inside_triangle(vertex))
+
+    return np.all(inside)
+
 
 
 def unzip(l):

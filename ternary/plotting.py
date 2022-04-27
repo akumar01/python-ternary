@@ -6,7 +6,7 @@ import matplotlib
 from matplotlib import pyplot as plt
 import numpy as np
 
-from .helpers import project_sequence
+from .helpers import project_sequence, ternary_conversion
 from .colormapping import get_cmap, colorbar_hack
 
 
@@ -144,8 +144,9 @@ def scatter(points, ax=None, permutation=None, colorbar=False, colormap=None,
     """
     if not ax:
         fig, ax = plt.subplots()
-    xs, ys = project_sequence(points, permutation=permutation)
-    ax.scatter(xs, ys, vmin=vmin, vmax=vmax, **kwargs)
+    xy = ternary_conversion(points)
+    #xs, ys = project_sequence(points, permutation=permutation)
+    ax.scatter(xy[:, 0], xy[:, 1], vmin=vmin, vmax=vmax, **kwargs)
 
     if colorbar and (colormap != None):
         if cb_kwargs != None:

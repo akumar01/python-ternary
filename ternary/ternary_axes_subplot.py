@@ -7,11 +7,13 @@ from functools import partial
 
 import numpy as np
 from matplotlib import pyplot as plt
+import pdb
 
 from . import heatmapping
 from . import lines
 from . import plotting
-from .helpers import project_point, convert_coordinates_sequence
+from .helpers import project_point, convert_coordinates_sequence, ternary_conversion, unzip, poly_inside_triangle
+from .colormapping import get_cmap, colormapper, colorbar_hack
 
 
 BackgroundParameters = namedtuple('BackgroundParameters', ['color', 'alpha', 'zorder'])
@@ -366,13 +368,13 @@ class TernaryAxesSubplot(object):
                        **kwargs)
 
     def ticks(self, ticks=None, locations=None, multiple=1, axis='blr',
-              clockwise=False, axes_colors=None, tick_formats=None, **kwargs):
+              clockwise=False, axes_colors=None, tick_formats=None, delta=0, **kwargs):
         ax = self.get_axes()
         scale = self.get_scale()
         lines.ticks(ax, scale, ticks=ticks, locations=locations,
                     multiple=multiple, clockwise=clockwise, axis=axis,
                     axes_colors=axes_colors, tick_formats=tick_formats,
-                    **kwargs)
+                    delta=delta, **kwargs)
 
     # Redrawing and resizing
 
@@ -433,6 +435,53 @@ class TernaryAxesSubplot(object):
         permutation = self._permutation
         plotting.plot_colored_trajectory(points, cmap=cmap, ax=ax,
                                          permutation=permutation, **kwargs)
+
+    def hexbin(self, points, cmap=None, vmin=0, vmax=1, gridsize=100, **kwargs):
+
+        xy = ternary_conversion(points)
+        x = xy[:, 0]
+        y = xy[:, 1]
+
+        polyc = plt.hexbin(x, y, gridsize=gridsize, **kwargs, visible=False)
+        hex_xy = polyc.get_offsets()
+        values = polyc.get_array()
+
+        if np.iterable(gridsize):
+            nx, ny = gridsize
+        else:
+            nx = gridsize
+            ny = int(nx / np.sqrt(3))
+
+        # Ripped from matplotlib.axes._axes.hexbin
+        x = np.array(x, float)
+        y = np.array(y, float)
+
+        xmin, xmax = (np.min(x), np.max(x)) if len(x) else (0, 1)
+        ymin, ymax = (np.min(y), np.max(y)) if len(y) else (0, 1)
+
+        # In the x-direction, the hexagons exactly cover the region from
+        # xmin to xmax. Need some padding to avoid roundoff errors.
+        padding = 1.e-9 * (xmax - xmin)
+        xmin -= padding
+        xmax += padding
+        sx = (xmax - xmin) / nx
+        sy = (ymax - ymin) / ny
+        polygon = [sx, sy / 3] * np.array(
+            [[.5, -.5], [.5, .5], [0., 1.], [-.5, .5], [-.5, -.5], [0., -1.]])
+
+        ax = self.get_axes()
+
+        vertices = [np.array([cent + vert for vert in polygon]) for cent in hex_xy]
+        for verts, value in zip(vertices, values):
+            if poly_inside_triangle(verts):
+                if value is None:
+                    continue
+                color = colormapper(value, vmin, vmax, cmap=cmap)
+
+                # Matplotlib wants a list of xs and a list of ys
+
+                xs, ys = unzip(verts)
+                ax.fill(xs, ys, facecolor=color, edgecolor=color)
 
     def heatmap(self, data, scale=None, cmap=None, scientific=False,
                 style='triangular', colorbar=True, use_rgba=False,

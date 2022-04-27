@@ -207,7 +207,7 @@ def normalize_tick_formats(tick_formats):
 
 def ticks(ax, scale, ticks=None, locations=None, multiple=1, axis='b',
           offset=0.01, clockwise=False, axes_colors=None, fontsize=10,
-          tick_formats=None, **kwargs):
+          tick_formats=None, delta=0, **kwargs):
     """
     Sets tick marks and labels.
 
@@ -240,6 +240,8 @@ def ticks(ax, scale, ticks=None, locations=None, multiple=1, axis='b',
         a float with 3 decimal places or "%.3e" for scientific format with
         3 decimal places or "%d" for ints. If tick_formats is a string, it
         is assumed that this is a format string to be applied to all axes.
+    delta: float, 0
+        Amount to shift the tick labels relative to the ticks
     kwargs:
         Any kwargs to pass through to matplotlib.
 
@@ -291,7 +293,7 @@ def ticks(ax, scale, ticks=None, locations=None, multiple=1, axis='b',
                 s = tick
             else:
                 s = tick_formats['r'] % tick
-            ax.text(x, y, s, horizontalalignment="center",
+            ax.text(x + delta, y, s, horizontalalignment="center",
                     color=axes_colors['r'], fontsize=fontsize)
 
     if 'l' in axis:
@@ -313,7 +315,7 @@ def ticks(ax, scale, ticks=None, locations=None, multiple=1, axis='b',
                 s = tick
             else:
                 s = tick_formats['l'] % tick
-            ax.text(x, y, s, horizontalalignment="center",
+            ax.text(x - delta, y, s, horizontalalignment="center",
                     color=axes_colors['l'], fontsize=fontsize)
 
     if 'b' in axis:
@@ -335,5 +337,5 @@ def ticks(ax, scale, ticks=None, locations=None, multiple=1, axis='b',
                 s = tick
             else:
                 s = tick_formats['b'] % tick
-            ax.text(x, y, s, horizontalalignment="center",
+            ax.text(x, y - delta, s, horizontalalignment="center",
                     color=axes_colors['b'], fontsize=fontsize)
