@@ -12,12 +12,19 @@ SQRT3OVER2 = SQRT3 / 2.
 
 ### Auxilliary Functions ###
 def ternary_conversion(points):
-    converted_points = np.array([(0.5 * (2 * y + z)/(x + y + z), np.sqrt(3)/2 * z/(x + y + z))
-                                 for x, y, z in points])
+    converted_points = []
+    for x, y, z in points:
+        # Normalize so that the three numbers sum to 1
+        x_ = x/(x + y + z)
+        y_ = y/(x + y + z) 
+        z_ = z/(x + y + z)
+    
+        converted_points.append((0.5 * (2 * y_ + z_)/(x_ + y_ + z_), np.sqrt(3)/2 * z_/(x_ + y_ + z_)))
+    converted_points = np.array(converted_points)
 
     return converted_points
 
-
+# Checks if any of the vertices of the polygon lie within the standard triangle
 def poly_inside_triangle(vertices):
     # See wikipedia entry on Barycentric coordinates
     x1 = 0
@@ -45,7 +52,7 @@ def poly_inside_triangle(vertices):
     for vertex in vertices:
         inside.append(inside_triangle(vertex))
 
-    return np.all(inside)
+    return np.any(inside)
 
 
 

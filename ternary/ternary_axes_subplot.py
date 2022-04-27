@@ -436,7 +436,7 @@ class TernaryAxesSubplot(object):
         plotting.plot_colored_trajectory(points, cmap=cmap, ax=ax,
                                          permutation=permutation, **kwargs)
 
-    def hexbin(self, points, cmap=None, vmin=0, vmax=1, gridsize=100, **kwargs):
+    def hexbin(self, points, cmap=None, vmin=None, vmax=None, gridsize=100, logscale=False, **kwargs):
 
         xy = ternary_conversion(points)
         x = xy[:, 0]
@@ -445,6 +445,13 @@ class TernaryAxesSubplot(object):
         polyc = plt.hexbin(x, y, gridsize=gridsize, **kwargs, visible=False)
         hex_xy = polyc.get_offsets()
         values = polyc.get_array()
+
+        if logscale:
+            values = np.log10(1 + values)
+        
+        if vmin is None or vmax is None:
+            vmin = np.min(values)
+            vmax = np.max(values)
 
         if np.iterable(gridsize):
             nx, ny = gridsize
@@ -458,6 +465,8 @@ class TernaryAxesSubplot(object):
 
         xmin, xmax = (np.min(x), np.max(x)) if len(x) else (0, 1)
         ymin, ymax = (np.min(y), np.max(y)) if len(y) else (0, 1)
+
+
 
         # In the x-direction, the hexagons exactly cover the region from
         # xmin to xmax. Need some padding to avoid roundoff errors.
@@ -476,6 +485,7 @@ class TernaryAxesSubplot(object):
             if poly_inside_triangle(verts):
                 if value is None:
                     continue
+
                 color = colormapper(value, vmin, vmax, cmap=cmap)
 
                 # Matplotlib wants a list of xs and a list of ys
